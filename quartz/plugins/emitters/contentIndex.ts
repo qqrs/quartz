@@ -14,6 +14,7 @@ export type ContentDetails = {
   title: string
   links: SimpleSlug[]
   tags: string[]
+  norss?: boolean
   content: string
   richContent?: string
   date?: Date
@@ -71,6 +72,7 @@ function generateRSSFeed(cfg: GlobalConfiguration, idx: ContentIndex, limit?: nu
 
       return f1.title.localeCompare(f2.title)
     })
+    .filter(([slug, content]) => content.norss !== true)
     .map(([slug, content]) => createURLEntry(simplifySlug(slug), content))
     .slice(0, limit ?? idx.size)
     .join("")
@@ -125,6 +127,7 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
             title: file.data.frontmatter?.title!,
             links: file.data.links ?? [],
             tags: file.data.frontmatter?.tags ?? [],
+            norss: file.data.frontmatter?.norss ?? false,
             content: file.data.text ?? "",
             richContent: opts?.rssFullHtml
               ? escapeHTML(toHtml(tree as Root, { allowDangerousHtml: true }))
@@ -165,6 +168,7 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
           // for the RSS feed
           delete content.description
           delete content.date
+          delete content.norss
           return [slug, content]
         }),
       )
